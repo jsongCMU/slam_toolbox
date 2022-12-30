@@ -73,7 +73,9 @@ void SynchronousSlamToolbox::laserCallback(
   bool found_odom = false;
   for(size_t idx = 0; idx < pose_helpers_.size(); idx++)
   {
-    found_odom = pose_helpers_[idx]->getOdomPose(pose, scan->header.stamp, scan->header.frame_id);
+    // Get base frame ID from laser frame ID, then try compute odometry
+    const std::string base_frame_id = m_laser_id_to_base_id_[scan->header.frame_id];
+    found_odom = pose_helpers_[idx]->getOdomPose(pose, scan->header.stamp, base_frame_id); // Assumes base frame = laser frame; nvm
     if(found_odom)
       break;
   }

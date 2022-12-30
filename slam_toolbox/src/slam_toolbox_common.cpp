@@ -44,18 +44,22 @@ SlamToolbox::SlamToolbox(ros::NodeHandle& nh)
     ROS_FATAL("[RoboSAR:slam_toolbox_common:SlamToolbox] base_frames_.size() != laser_topics_.size()");
   if(base_frames_.size() != odom_frames_.size())
     ROS_FATAL("[RoboSAR:slam_toolbox_common:SlamToolbox] base_frames_.size() != odom_frames_.size()");
+  if(base_frames_.size() != laser_frames_.size())
+    ROS_FATAL("[RoboSAR:slam_toolbox_common:SlamToolbox] base_frames_.size() != laser_frames_.size()");
   assert(base_frames_.size() == laser_topics_.size());
   assert(base_frames_.size() == odom_frames_.size());
-  // Create map to compute odom frame given base frame
+  assert(base_frames_.size() == laser_frames_.size());
+  // Setup maps: base frame to odom frame, and laser frame to base frame
   for(size_t idx = 0; idx < base_frames_.size(); idx++)
   {
     m_base_id_to_odom_id_[base_frames_[idx]] = odom_frames_[idx];
+    m_laser_id_to_base_id_[laser_frames_[idx]] = base_frames_[idx];
   }
   // Set up pose helpers and laser assistants for each robot
   for(size_t idx = 0; idx < base_frames_.size(); idx++)
   {
     pose_helpers_.push_back(std::make_unique<pose_utils::GetPoseHelper>(tf_.get(), base_frames_[idx], odom_frames_[idx]));
-    laser_assistants_[base_frames_[idx]] = std::make_unique<laser_utils::LaserAssistant>(nh_, tf_.get(), base_frames_[idx]); // Assumes base frame = laser frame
+    laser_assistants_[base_frames_[idx]] = std::make_unique<laser_utils::LaserAssistant>(nh_, tf_.get(), base_frames_[idx]);
   }
   scan_holder_ = std::make_unique<laser_utils::ScanHolder>(lasers_);
   map_saver_ = std::make_unique<map_saver::MapSaver>(nh_, map_name_);
@@ -145,6 +149,11 @@ void SlamToolbox::setParams(ros::NodeHandle& private_nh)
   if (!private_nh.getParam("odom_frames", odom_frames_))
   {
     odom_frames_ = default_odom_frame;
+  }
+  std::vector<std::string> default_laser_frame = {"laser"};
+  if (!private_nh.getParam("laser_frames", laser_frames_))
+  {
+    laser_frames_ = default_laser_frame;
   }
   private_nh.param("throttle_scans", throttle_scans_, 1);
   private_nh.param("enable_interactive_mode", enable_interactive_mode_, false);
@@ -331,7 +340,8 @@ karto::LaserRangeFinder* SlamToolbox::getLaser(const
   sensor_msgs::LaserScan::ConstPtr& scan)
 /*****************************************************************************/
 {
-  const std::string& frame = scan->header.frame_id;
+  // Use laser scan ID to get base frame ID
+  const std::string& frame = m_laser_id_to_base_id_[scan->header.frame_id];
   if(lasers_.find(frame) == lasers_.end())
   {
     try
@@ -385,8 +395,9 @@ tf2::Stamped<tf2::Transform> SlamToolbox::setTransformFromPoses(
   const bool& update_reprocessing_transform)
 /*****************************************************************************/
 {
-  // Use base frame to look up odom frame
-  std::string odom_frame = m_base_id_to_odom_id_[header.frame_id];
+  // Use laser frame to look up base and odom frame
+  const std::string base_frame = m_laser_id_to_base_id_[header.frame_id];
+  const std::string odom_frame = m_base_id_to_odom_id_[base_frame];
   // Compute the map->odom transform
   const ros::Time& t = header.stamp;
   tf2::Stamped<tf2::Transform> odom_to_map;
@@ -394,7 +405,7 @@ tf2::Stamped<tf2::Transform> SlamToolbox::setTransformFromPoses(
   q.setRPY(0., 0., corrected_pose.GetHeading());
   tf2::Stamped<tf2::Transform> base_to_map(
     tf2::Transform(q, tf2::Vector3(corrected_pose.GetX(),
-    corrected_pose.GetY(), 0.0)).inverse(), t, header.frame_id); // Assumes base frame = laser frame
+    corrected_pose.GetY(), 0.0)).inverse(), t, base_frame);
   try
   {
     geometry_msgs::TransformStamped base_to_map_msg, odom_to_map_msg;

@@ -111,7 +111,7 @@ protected:
 
   // Storage for ROS parameters
   std::string map_frame_, map_name_;
-  std::vector<std::string> odom_frames_, base_frames_, laser_topics_;
+  std::vector<std::string> odom_frames_, base_frames_, laser_frames_, laser_topics_;
   ros::Duration transform_timeout_, tf_buffer_dur_, minimum_time_interval_;
   int throttle_scans_;
 
@@ -124,6 +124,7 @@ protected:
   std::map<std::string, laser_utils::LaserMetadata> lasers_;
   std::map<std::string, tf2::Transform> m_map_to_odoms_;
   std::map<std::string, std::string> m_base_id_to_odom_id_;
+  std::map<std::string, std::string> m_laser_id_to_base_id_;
 
   // helpers
   std::map<std::string,std::unique_ptr<laser_utils::LaserAssistant>> laser_assistants_;
