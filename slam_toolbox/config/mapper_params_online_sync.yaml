@@ -10,7 +10,6 @@ ceres_loss_function: None
 map_frame: map
 odom_frames: ["robot1/odom", "robot2/odom"]
 base_frames: ["robot1/base_footprint", "robot2/base_footprint"]
-laser_frames: ["robot1/laser_frame", "robot2/laser_frame"]
 laser_topics: ["/robot1/scan", "/robot2/scan"]
 mode: mapping #localization
 

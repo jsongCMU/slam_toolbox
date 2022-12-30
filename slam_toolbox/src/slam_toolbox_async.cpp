@@ -32,7 +32,7 @@ AsynchronousSlamToolbox::AsynchronousSlamToolbox(ros::NodeHandle& nh)
 
 /*****************************************************************************/
 void AsynchronousSlamToolbox::laserCallback(
-  const sensor_msgs::LaserScan::ConstPtr& scan)
+  const sensor_msgs::LaserScan::ConstPtr& scan, const std::string& base_frame_id)
 /*****************************************************************************/
 {
   // no odom info on any pose helper
