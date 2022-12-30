@@ -396,8 +396,8 @@ tf2::Stamped<tf2::Transform> SlamToolbox::setTransformFromPoses(
 /*****************************************************************************/
 {
   // Use laser frame to look up base and odom frame
-  const std::string base_frame = m_laser_id_to_base_id_[header.frame_id];
-  const std::string odom_frame = m_base_id_to_odom_id_[base_frame];
+  const std::string& base_frame = m_laser_id_to_base_id_[header.frame_id];
+  const std::string& odom_frame = m_base_id_to_odom_id_[base_frame];
   // Compute the map->odom transform
   const ros::Time& t = header.stamp;
   tf2::Stamped<tf2::Transform> odom_to_map;
