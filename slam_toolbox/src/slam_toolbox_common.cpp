@@ -59,7 +59,7 @@ SlamToolbox::SlamToolbox(ros::NodeHandle& nh)
   for(size_t idx = 0; idx < base_frames_.size(); idx++)
   {
     pose_helpers_.push_back(std::make_unique<pose_utils::GetPoseHelper>(tf_.get(), base_frames_[idx], odom_frames_[idx]));
-    laser_assistants_[base_frames_[idx]] = std::make_unique<laser_utils::LaserAssistant>(nh_, tf_.get(), base_frames_[idx]);
+    laser_assistants_[laser_frames_[idx]] = std::make_unique<laser_utils::LaserAssistant>(nh_, tf_.get(), base_frames_[idx]);
   }
   scan_holder_ = std::make_unique<laser_utils::ScanHolder>(lasers_);
   map_saver_ = std::make_unique<map_saver::MapSaver>(nh_, map_name_);
@@ -341,7 +341,7 @@ karto::LaserRangeFinder* SlamToolbox::getLaser(const
 /*****************************************************************************/
 {
   // Use laser scan ID to get base frame ID
-  const std::string& frame = m_laser_id_to_base_id_[scan->header.frame_id];
+  const std::string& frame = scan->header.frame_id;
   if(lasers_.find(frame) == lasers_.end())
   {
     try
