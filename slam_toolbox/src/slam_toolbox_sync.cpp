@@ -81,13 +81,15 @@ void SynchronousSlamToolbox::laserCallback(
   if(!found_odom)
     return;
   
-  // Add new sensor to ID map, and to laser assistants
-  if(m_laser_id_to_base_id_.find(scan->header.frame_id) == m_laser_id_to_base_id_.end())
+  // Add new sensor to laser ID map, and to laser assistants
   {
-    m_laser_id_to_base_id_[scan->header.frame_id] = base_frame_id;
-    laser_assistants_[scan->header.frame_id] = std::make_unique<laser_utils::LaserAssistant>(nh_, tf_.get(), base_frame_id);
+    boost::mutex::scoped_lock l(laser_id_map_mutex_);
+    if(m_laser_id_to_base_id_.find(scan->header.frame_id) == m_laser_id_to_base_id_.end())
+    {
+      m_laser_id_to_base_id_[scan->header.frame_id] = base_frame_id;
+      laser_assistants_[scan->header.frame_id] = std::make_unique<laser_utils::LaserAssistant>(nh_, tf_.get(), base_frame_id);
+    }
   }
-
   // ensure the laser can be used
   karto::LaserRangeFinder* laser = getLaser(scan);
 
