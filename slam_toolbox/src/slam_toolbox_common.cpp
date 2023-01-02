@@ -384,16 +384,22 @@ tf2::Stamped<tf2::Transform> SlamToolbox::setTransformFromPoses(
   const bool& update_reprocessing_transform)
 /*****************************************************************************/
 {
+  tf2::Stamped<tf2::Transform> odom_to_map;
   // Use laser frame to look up base and odom frame
   std::string base_frame;
   {
     boost::mutex::scoped_lock l(laser_id_map_mutex_);
-    base_frame = m_laser_id_to_base_id_[header.frame_id];
+    std::map<std::string, std::string>::const_iterator it = m_laser_id_to_base_id_.find(header.frame_id);
+    if(it == m_laser_id_to_base_id_.end())
+    {
+      ROS_ERROR("Requested laser frame ID not in map: %s", header.frame_id.c_str());
+      return odom_to_map;
+    }
+    base_frame = it->second;
   }
   const std::string& odom_frame = m_base_id_to_odom_id_[base_frame];
   // Compute the map->odom transform
   const ros::Time& t = header.stamp;
-  tf2::Stamped<tf2::Transform> odom_to_map;
   tf2::Quaternion q(0.,0.,0.,1.0);
   q.setRPY(0., 0., corrected_pose.GetHeading());
   tf2::Stamped<tf2::Transform> base_to_map(
