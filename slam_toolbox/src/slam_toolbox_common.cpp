@@ -335,7 +335,13 @@ karto::LaserRangeFinder* SlamToolbox::getLaser(const
   {
     try
     {
-      lasers_[frame] = laser_assistants_[frame]->toLaserMetadata(*scan);
+      std::map<std::string,std::unique_ptr<laser_utils::LaserAssistant>>::const_iterator it = laser_assistants_.find(frame);
+      if(it == laser_assistants_.end())
+      {
+        ROS_ERROR("Failed to get requested laser assistant, aborting initialization (%s)", frame.c_str());
+        return nullptr;
+      }
+      lasers_[frame] = it->second->toLaserMetadata(*scan);
       dataset_->Add(lasers_[frame].getLaser(), true);
     }
     catch (tf2::TransformException& e)
@@ -745,8 +751,14 @@ void SlamToolbox::loadSerializedPoseGraph(
         ROS_INFO("Got scan!");
         try
         {
-          lasers_[scan->header.frame_id] =
-            laser_assistants_[scan->header.frame_id]->toLaserMetadata(*scan);
+          const std::string& frame = scan->header.frame_id;
+          std::map<std::string,std::unique_ptr<laser_utils::LaserAssistant>>::const_iterator it = laser_assistants_.find(frame);
+          if(it == laser_assistants_.end())
+          {
+            ROS_ERROR("Failed to get requested laser assistant, aborting continue mapping (%s)", frame.c_str());
+            exit(-1);
+          }
+          lasers_[frame] = it->second->toLaserMetadata(*scan);
           break;
         }
         catch (tf2::TransformException& e)
