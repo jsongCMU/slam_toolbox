@@ -74,13 +74,13 @@ void SynchronousSlamToolbox::laserCallback(
   for(size_t idx = 0; idx < pose_helpers_.size(); idx++)
   {
     // try compute odometry
-    found_odom = pose_helpers_[idx]->getOdomPose(pose, scan->header.stamp, base_frame_id); // Assumes base frame = laser frame; nvm
+    found_odom = pose_helpers_[idx]->getOdomPose(pose, scan->header.stamp, base_frame_id);
     if(found_odom)
       break;
   }
   if(!found_odom)
     return;
-  
+
   // Add new sensor to laser ID map, and to laser assistants
   {
     boost::mutex::scoped_lock l(laser_id_map_mutex_);
